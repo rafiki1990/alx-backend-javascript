@@ -1,42 +1,55 @@
 const fs = require('fs');
+const path = require('path');
 
-const countStudents = (filePath) => {
+function countStudents(filePath) {
   try {
     // Read the file synchronously
-    const data = fs.readFileSync(filePath, 'utf-8');
+    const data = fs.readFileSync(filePath, 'utf8');
 
-    // Process the file content
-    const lines = data.trim().split('\n').filter(line => line.length > 0);
-    if (lines.length === 0) {
-      throw new Error('Cannot load the database');
+    // Split the data into rows and filter out empty lines
+    const rows = data.trim().split('\n').filter(row => row.trim() !== '');
+
+    // Check if there are any rows to process
+    if (rows.length === 0) {
+      console.log('Number of students: 0');
+      return;
     }
 
-    // Create a map to store the fields and their respective students
-    const fields = {};
-    const students = lines.slice(1); // Skip the header
+    // Extract headers and data
+    const headers = rows[0].split(',');
+    const students = rows.slice(1);
 
-    students.forEach(student => {
-      const [firstname, lastname, age, field] = student.split(',');
-      if (!fields[field]) {
-        fields[field] = [];
-      }
-      fields[field].push(firstname);
+    // Initialize data structures to count students and collect names
+    const fieldCounts = {};
+    const fieldNames = {};
+
+    headers.forEach(header => {
+      fieldCounts[header] = 0;
+      fieldNames[header] = [];
     });
 
-    // Log the total number of students
-    const totalStudents = students.length;
-    console.log(`Number of students: ${totalStudents}`);
+    // Process each student record
+    students.forEach(student => {
+      const fields = student.split(',');
+      fields.forEach((field, index) => {
+        const header = headers[index];
+        if (field.trim() !== '') {
+          fieldCounts[header]++;
+          fieldNames[header].push(field.trim());
+        }
+      });
+    });
 
-    // Log the number of students in each field and their names
-    for (const field in fields) {
-      if (Object.prototype.hasOwnProperty.call(fields, field)) {
-        console.log(`Number of students in ${field}: ${fields[field].length}. List: ${fields[field].join(', ')}`);
-      }
+    // Log the number of students and lists
+    console.log(`Number of students: ${students.length}`);
+
+    for (const [field, count] of Object.entries(fieldCounts)) {
+      console.log(`Number of students in ${field}: ${count}. List: ${fieldNames[field].join(', ')}`);
     }
   } catch (error) {
-    // Handle errors
-    console.error(error.message);
+    console.error('Cannot load the database');
   }
-};
+}
 
-module.exports = countStudents;
+// Example usage:
+// countStudents(path.join(__dirname, 'database.csv'));
