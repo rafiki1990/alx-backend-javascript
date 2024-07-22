@@ -1,26 +1,62 @@
 const express = require('express');
-const { countStudents } = require('./3-read_file_async');
+const fs = require('fs');
+const app = express();
+const port = 1245;
 
-const server = express();
+// Function to read the CSV file and process student data
+const countStudents = (path) => {
+  return new Promise((resolve, reject) => {
+    fs.readFile(path, 'utf-8', (err, data) => {
+      if (err) {
+        reject(new Error('Cannot load the database'));
+      } else {
+        const lines = data.trim().split('\n').filter(line => line.length > 0);
+        const students = lines.slice(1);
+        const fields = {};
 
-server.get('/', (req, res) => {
-    res.send('Hello Holberton School!');
-});
-
-server.get('/students', (req, res) => {
-    const filePath = 'database.csv';
-    countStudents(filePath)
-        .then(total => {
-            res.send(`This is the list of our students. Total number of students: ${total}`);
-        })
-        .catch(err => {
-            res.status(500).send(err.message);
+        students.forEach(student => {
+          const studentData = student.split(',');
+          const field = studentData[3];
+          if (!fields[field]) {
+            fields[field] = [];
+          }
+          fields[field].push(studentData[0]);
         });
+
+        let response = `Number of students: ${students.length}\n`;
+        for (const field in fields) {
+          response += `Number of students in ${field}: ${fields[field].length}. List: ${fields[field].join(', ')}\n`;
+        }
+
+        resolve(response.trim());
+      }
+    });
+  });
+};
+
+// Route for the root path
+app.get('/', (req, res) => {
+  res.set('Content-Type', 'text/plain');
+  res.send('Hello Holberton School!');
 });
 
-const PORT = 1245;
-server.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}/`);
+// Route for the students path
+app.get('/students', async (req, res) => {
+  const database = process.argv[2]; // Database file path from command line argument
+  res.set('Content-Type', 'text/plain');
+
+  try {
+    const studentList = await countStudents(database);
+    res.send(`This is the list of our students\n${studentList}`);
+  } catch (error) {
+    res.send(`This is the list of our students\n${error.message}`);
+  }
 });
 
-module.exports = server;
+// Start the HTTP server
+app.listen(port, () => {
+  console.log(`Server listening on port ${port}`);
+});
+
+// Export the app for external use
+module.exports = app;
