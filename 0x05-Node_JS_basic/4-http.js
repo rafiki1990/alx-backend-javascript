@@ -1,23 +1,16 @@
-// Import the HTTP module
 const http = require('http');
 
-// Define the hostname and port
-const hostname = '127.0.0.1';
-const port = 1245;
-
-// Create a new HTTP server instance
+// Create the HTTP server
 const app = http.createServer((req, res) => {
-  // Set the status code to 200 (OK)
-  res.statusCode = 200;
-  // Set the response header to plain text
-  res.setHeader('Content-Type', 'text/plain');
-  // Send the response with the message
-  // "Hello Holberton School!"
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
   res.end('Hello Holberton School!');
 });
 
-// Start the server and listen on the specified
-// hostname and port
-app.listen(port, hostname);
+// Set the server to listen on port 1245
+const port = 1245;
+app.listen(port, () => {
+  console.log(`Server listening on port ${port}`);
+});
 
-// Export the app to be used in ot
+// Export the app for external use
+module.exports = app;
