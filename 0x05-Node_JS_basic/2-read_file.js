@@ -1,55 +1,57 @@
+// Import the file system module
 const fs = require('fs');
-const path = require('path');
 
-function countStudents(filePath) {
+// Function to count students
+function countStudents(path) {
   try {
-    // Read the file synchronously
-    const data = fs.readFileSync(filePath, 'utf8');
+    // Read the database file synchronously
+    const data = fs.readFileSync(path, 'utf8').trim().split('\n');
 
-    // Split the data into rows and filter out empty lines
-    const rows = data.trim().split('\n').filter(row => row.trim() !== '');
-
-    // Check if there are any rows to process
-    if (rows.length === 0) {
-      console.log('Number of students: 0');
-      return;
+    // If the database is empty, throw an error
+    if (data.length === 0) {
+      throw new Error('Cannot load the database');
     }
 
-    // Extract headers and data
-    const headers = rows[0].split(',');
-    const students = rows.slice(1);
-
-    // Initialize data structures to count students and collect names
+    // Object to store the counts of students per field
     const fieldCounts = {};
-    const fieldNames = {};
 
-    headers.forEach(header => {
-      fieldCounts[header] = 0;
-      fieldNames[header] = [];
+    // Loop through each line of the data
+    data.forEach((line) => {
+      // Split the line into fields
+      const fields = line.split(',');
+      // Extract the field from the last element
+      const field = fields[fields.length - 1].trim();
+
+      // If the line has only one field which is empty, skip it
+      if (fields.length === 1 && fields[0].trim() === '') {
+        return;
+      }
+
+      // Increment the count for the field
+      fieldCounts[field] = (fieldCounts[field] || 0) + 1;
     });
 
-    // Process each student record
-    students.forEach(student => {
-      const fields = student.split(',');
-      fields.forEach((field, index) => {
-        const header = headers[index];
-        if (field.trim() !== '') {
-          fieldCounts[header]++;
-          fieldNames[header].push(field.trim());
-        }
-      });
+    // Display the total number of students
+    console.log(`Number of students: ${data.length}`);
+
+    // Display the number of students per field
+    Object.entries(fieldCounts).forEach(([field, count]) => {
+      // Filter the data for the current field and extract the student names
+      const list = data
+        .filter((line) => line.trim().endsWith(field))
+        .map((line) => line.split(',')[0].trim())
+        .join(', ');
+      // Display the count and list of students for the field
+      console.log(`Number of students in ${field}: ${count}. List: ${list}`);
     });
-
-    // Log the number of students and lists
-    console.log(`Number of students: ${students.length}`);
-
-    for (const [field, count] of Object.entries(fieldCounts)) {
-      console.log(`Number of students in ${field}: ${count}. List: ${fieldNames[field].join(', ')}`);
-    }
   } catch (error) {
-    console.error('Cannot load the database');
+    // If an error occurs, throw an error
+    throw new Error('Cannot load the database');
   }
 }
 
-// Example usage:
-// countStudents(path.join(__dirname, 'database.csv'));
+// Call the countStudents function with the database file path
+countStudents('database.csv');
+
+// Export the countStudents function
+module.exports = countStudents;
