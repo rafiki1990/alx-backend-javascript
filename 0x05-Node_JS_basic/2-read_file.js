@@ -1,57 +1,42 @@
-// Import the file system module
 const fs = require('fs');
 
-// Function to count students
-function countStudents(path) {
+const countStudents = (filePath) => {
   try {
-    // Read the database file synchronously
-    const data = fs.readFileSync(path, 'utf8').trim().split('\n');
+    // Read the file synchronously
+    const data = fs.readFileSync(filePath, 'utf-8');
 
-    // If the database is empty, throw an error
-    if (data.length === 0) {
+    // Process the file content
+    const lines = data.trim().split('\n').filter(line => line.length > 0);
+    if (lines.length === 0) {
       throw new Error('Cannot load the database');
     }
 
-    // Object to store the counts of students per field
-    const fieldCounts = {};
+    // Create a map to store the fields and their respective students
+    const fields = {};
+    const students = lines.slice(1); // Skip the header
 
-    // Loop through each line of the data
-    data.forEach((line) => {
-      // Split the line into fields
-      const fields = line.split(',');
-      // Extract the field from the last element
-      const field = fields[fields.length - 1].trim();
-
-      // If the line has only one field which is empty, skip it
-      if (fields.length === 1 && fields[0].trim() === '') {
-        return;
+    students.forEach(student => {
+      const [firstname, lastname, age, field] = student.split(',');
+      if (!fields[field]) {
+        fields[field] = [];
       }
-
-      // Increment the count for the field
-      fieldCounts[field] = (fieldCounts[field] || 0) + 1;
+      fields[field].push(firstname);
     });
 
-    // Display the total number of students
-    console.log(`Number of students: ${data.length}`);
+    // Log the total number of students
+    const totalStudents = students.length;
+    console.log(`Number of students: ${totalStudents}`);
 
-    // Display the number of students per field
-    Object.entries(fieldCounts).forEach(([field, count]) => {
-      // Filter the data for the current field and extract the student names
-      const list = data
-        .filter((line) => line.trim().endsWith(field))
-        .map((line) => line.split(',')[0].trim())
-        .join(', ');
-      // Display the count and list of students for the field
-      console.log(`Number of students in ${field}: ${count}. List: ${list}`);
-    });
+    // Log the number of students in each field and their names
+    for (const field in fields) {
+      if (Object.prototype.hasOwnProperty.call(fields, field)) {
+        console.log(`Number of students in ${field}: ${fields[field].length}. List: ${fields[field].join(', ')}`);
+      }
+    }
   } catch (error) {
-    // If an error occurs, throw an error
-    throw new Error('Cannot load the database');
+    // Handle errors
+    console.error(error.message);
   }
-}
+};
 
-// Call the countStudents function with the database file path
-countStudents('database.csv');
-
-// Export the countStudents function
 module.exports = countStudents;
