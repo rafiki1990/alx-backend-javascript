@@ -1,30 +1,22 @@
+const request = require('request');
 const chai = require('chai');
-const chaiHttp = require('chai-http');
-const app = require('./api');
-
-const { expect } = chai;
-chai.use(chaiHttp);
+const expect = chai.expect;
+const server = require('./api'); // Make sure this path is correct based on your folder structure
 
 describe('GET /', function() {
-  it('should return a status code of 200', function(done) {
-    chai.request(app)
-      .get('/')
-      .end((err, res) => {
-        if (err) done(err);
-        expect(res).to.have.status(200);
-        done();
-      });
+  it('should return status code 200', function(done) {
+    request.get('http://localhost:7865/', function(error, response, body) {
+      expect(response.statusCode).to.equal(200);
+      done();
+    });
   });
 
   it('should return the correct message', function(done) {
-    chai.request(app)
-      .get('/')
-      .end((err, res) => {
-        if (err) done(err);
-        expect(res.text).to.equal('Welcome to the payment system');
-        done();
-      });
+    request.get('http://localhost:7865/', function(error, response, body) {
+      expect(body).to.equal('Welcome to the payment system');
+      done();
+    });
   });
 
-  // You can add more tests if needed
+  // Add other tests here if needed
 });
